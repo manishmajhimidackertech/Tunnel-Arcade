@@ -1,0 +1,23 @@
+{
+  "name": "tunnel-arcade",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tunnel Trouble 3D ported to the web as an installable, offline-capable PWA built with Three.js.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@fontsource/orbitron": "^5.3.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

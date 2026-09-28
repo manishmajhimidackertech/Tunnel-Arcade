@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Tunnel Trouble 3D</title>
+    <meta name="description" content="Pilot your spaceship through an endless 3D tunnel. Dodge doors, bars and mines, and chase the highest score." />
+    <meta name="theme-color" content="#02070d" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Tunnel Trouble" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  </head>
+  <body data-screen="menu">
+    <canvas id="scene" aria-label="Game view"></canvas>
+    <div id="touch-layer"></div>
+
+    <div id="hud" hidden>
+      <button id="btn-pause" class="icon-btn" aria-label="Pause"><span></span><span></span></button>
+      <div id="score" aria-live="off">0</div>
+    </div>
+
+    <div id="joystick" hidden aria-hidden="true"><div class="knob"></div></div>
+    <canvas id="countdown" hidden aria-hidden="true"></canvas>
+    <div id="banner" class="banner" role="status"></div>
+    <div id="flash"></div>
+
+    <section id="menu" class="screen">
+      <h1 class="logo">
+        <span class="logo-line">Tunnel</span>
+        <span class="logo-line">Trouble <em>3D</em></span>
+      </h1>
+      <div class="menu-buttons">
+        <button class="btn btn-blue" data-mode="classic">Classic<small data-best="classic"></small></button>
+        <button class="btn btn-red" data-mode="mines">Mine Mode<small data-best="mines"></small></button>
+      </div>
+      <div class="chips">
+        <button id="tgl-sound" class="chip" aria-pressed="true">Sound</button>
+        <button id="tgl-music" class="chip" aria-pressed="true">Music</button>
+        <button id="tgl-invert" class="chip" aria-pressed="false">Invert Y</button>
+        <button id="btn-install" class="chip chip-accent" hidden>Install App</button>
+      </div>
+      <p class="help">
+        Drag anywhere to steer with the joystick &middot; Arrow keys / WASD &middot; Gamepad<br />
+        Fly through the gaps in doors, dodge the bars and don't touch the mines.
+      </p>
+    </section>
+
+    <section id="pause" class="screen" hidden>
+      <h2 class="panel-title">Paused</h2>
+      <div class="menu-buttons">
+        <button id="btn-resume" class="btn btn-green">Resume</button>
+        <button id="btn-quit" class="btn btn-red">Quit</button>
+      </div>
+    </section>
+
+    <section id="gameover" class="screen" hidden>
+      <canvas id="crash-title" aria-label="Crash!"></canvas>
+      <div class="results">
+        <div class="result"><span id="final-mode">Classic</span></div>
+        <div class="result">Score <b id="final-score">0</b></div>
+        <div class="result">Best <b id="final-best">0</b></div>
+        <div id="new-record" hidden>New record!</div>
+      </div>
+      <div class="menu-buttons">
+        <button id="btn-retry" class="btn btn-green">Retry</button>
+        <button id="btn-menu" class="btn btn-blue">Menu</button>
+      </div>
+    </section>
+
+    <div id="toast" hidden></div>
+    <div id="no-webgl" hidden>
+      <p>Tunnel Trouble 3D needs WebGL. Please try a recent browser or enable hardware acceleration.</p>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
