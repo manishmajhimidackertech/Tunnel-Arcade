@@ -46,6 +46,7 @@
         <button id="tgl-sound" class="chip" aria-pressed="true">Sound</button>
         <button id="tgl-music" class="chip" aria-pressed="true">Music</button>
         <button id="tgl-invert" class="chip" aria-pressed="false">Invert Y</button>
+        <button id="tgl-tilt" class="chip" aria-pressed="false" hidden>Tilt steering</button>
         <button id="btn-install" class="chip chip-accent" hidden>Install App</button>
       </div>
       <p class="help">
@@ -76,6 +77,13 @@
         <button id="btn-menu" class="btn btn-blue">Menu</button>
       </div>
     </section>
+
+    <div id="rotate" hidden>
+      <div class="rotate-phone" aria-hidden="true"></div>
+      <p>Rotate your phone to landscape</p>
+      <small>If the screen doesn't turn, switch off rotation lock.</small>
+      <button id="btn-portrait" class="chip">Play in portrait anyway</button>
+    </div>
 
     <div id="toast" hidden></div>
     <div id="no-webgl" hidden>

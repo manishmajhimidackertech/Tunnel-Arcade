@@ -13,13 +13,17 @@ fully offline once loaded.
   *Bunker* (concrete with small lamps) and *Catacomb* (sandstone arches). The style changes as you fly deeper.
 - **Obstacles:** red-rimmed doors with triangle, half, slot, cross, circle and spoke-shaped openings; striped bars (full,
   half, Y, twin, plus); spinning variants unlock as the run gets harder.
-- **Slow-motion pickups:** a glowing hourglass occasionally floats in the tunnel. Grabbing it slows the world down
-  for a few seconds (your steering stays at full speed) and adds a small score bonus. Pickups are never placed at
+- **Slow-motion pickups:** once a run has built up real pace (about a minute in), a glowing hourglass appears every
+  few obstacles. Grabbing it smoothly eases the world down to under half speed for a few seconds and then back up
+  (your steering stays at full speed), and adds a small score bonus. Pickups are never placed at
   random: each one sits on a line that is guaranteed safe to fly straight through the next obstacle, accounting for
   spinning doors, drifting mines and the tunnel's roll.
 - **Curving, rolling tunnel** using a vertex-shader bend, so the tunnel snakes and spirals ahead of you while collisions stay exact.
 - Green **LED dot-matrix "3-2-1-GO!"** countdown and tip banners, like the original.
-- **Controls:** floating on-screen joystick (drag anywhere), arrow keys / WASD, or a gamepad. Optional inverted Y axis.
+- **Controls:** floating on-screen joystick (drag anywhere), arrow keys / WASD, a gamepad, or **tilt steering** on
+  phones and tablets (toggle it in the menu). Optional inverted Y axis.
+- **Landscape on phones:** the game asks you to rotate a phone held upright (and pauses a run if you do), and locks
+  to landscape where the browser allows it.
 - **Synthesised audio:** engine hum, whooshes, explosion and a looping synthwave track, all generated with WebAudio (no audio files).
 - **No image assets:** every texture is drawn procedurally on a canvas at start-up; the only downloads are the JS bundle,
   CSS, the Orbitron font and the app icons.
@@ -34,6 +38,13 @@ fully offline once loaded.
 | Steer | Drag anywhere (floating joystick) | Arrow keys / WASD | Left stick / D-pad |
 | Start / retry | Tap a mode / Retry | Enter or Space | A |
 | Pause | Pause button (top left) | Esc or P | Start |
+
+**Tilt steering** (phones/tablets): tilt the phone toward the side you want to go, like rolling a ball on a tray.
+The way you hold the phone when a run starts (or resumes) counts as "straight ahead". iOS asks for motion-sensor
+permission the first time you turn it on.
+
+**Invert Y** flips up and down for every control: pushing the joystick or tilting the phone up moves the ship down,
+like the pull-back-to-climb controls of a flight simulator.
 
 ## Getting started
 

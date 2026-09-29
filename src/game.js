@@ -27,6 +27,7 @@ import {
 } from './config.js';
 import { rotate2 } from './logic/collision.js';
 import { steerVelocity } from './logic/steering.js';
+import { SLOWMO_TIME, SLOWMO_SCALE, slowmoScale, slowmoRecovering } from './logic/slowmo.js';
 import { mulberry32 } from './logic/patterns.js';
 import { Tunnel, themeIndexAt } from './world/tunnel.js';
 import { THEMES, themeColors } from './world/themes.js';
@@ -37,8 +38,6 @@ import { bendUniform, bendAt, rollAt } from './world/bend.js';
 import { loadBest, saveBest } from './storage.js';
 
 const MENU_SPEED = 14;
-const SLOWMO_TIME = 4.5; // seconds of slow motion per pickup (real time)
-const SLOWMO_SCALE = 0.45; // how fast the world runs meanwhile; steering keeps full speed
 const PICKUP_BONUS = 25;
 const CRASH_DELAY = 1.5; // seconds between the crash and the results screen
 const THEME_COLORS = THEMES.map(themeColors);
@@ -99,7 +98,7 @@ export class Game {
     this.pos = { x: 0, y: -1.2 };
     this.vel = { x: 0, y: 0 };
     this.follow = { x: 0, y: -1.2 }; // smoothed ship position the camera tracks
-    this.slowmo = 0; // seconds of slow motion left
+    this.slowmo = null; // { elapsed, from, recovering } while a pickup is active
     this.timeScale = 1;
     this.bonus = 0;
     this.roll = 0;
@@ -157,6 +156,7 @@ export class Game {
     this.stateTime = 0;
     this.countStep = -1;
     this.ui.show('play');
+    this.input.calibrate();
     this.ui.tip(this.mode);
     this.audio.startEngine();
     this.audio.startMusic();
@@ -175,6 +175,7 @@ export class Game {
     if (this.state !== 'paused') return;
     this.state = this.pausedFrom;
     this.ui.show('play');
+    this.input.calibrate();
     this.audio.resume();
     this.last = performance.now();
   }
@@ -315,29 +316,33 @@ export class Game {
   }
 
   startSlowmo() {
-    const wasSlow = this.slowmo > 0;
-    this.slowmo = SLOWMO_TIME;
+    // start from the current pace, so grabbing another one mid-ramp never makes it jump
+    const slowAlready = this.slowmo && !this.slowmo.recovering;
+    this.slowmo = { elapsed: 0, from: this.timeScale, recovering: false };
     this.bonus += PICKUP_BONUS;
     this.ui.slowmoPickup(PICKUP_BONUS);
-    if (!wasSlow) this.audio.timeShift(true);
-    else this.audio.click();
+    if (slowAlready) this.audio.click();
+    else this.audio.timeShift(true);
   }
 
   updateSlowmo(dt) {
-    if (this.slowmo > 0) {
-      this.slowmo = Math.max(0, this.slowmo - dt);
-      if (this.slowmo === 0) this.audio.timeShift(false);
+    const s = this.slowmo;
+    if (!s) return;
+    s.elapsed += dt;
+    this.timeScale = slowmoScale(s.elapsed, s.from);
+    if (!s.recovering && slowmoRecovering(s.elapsed)) {
+      s.recovering = true;
+      this.audio.timeShift(false); // rising sweep while the pace comes back
     }
-    // ease in quickly, and ease back out over the last moments
-    const target = this.slowmo > 0.6 ? SLOWMO_SCALE : SLOWMO_SCALE + (1 - SLOWMO_SCALE) * (1 - this.slowmo / 0.6);
-    this.timeScale += (target - this.timeScale) * (1 - Math.exp(-dt * 8));
-    this.ui.setSlowmo(this.slowmo / SLOWMO_TIME);
+    // meter drains over the whole effect; tint follows how slow the world actually is
+    this.ui.setSlowmo(1 - s.elapsed / SLOWMO_TIME, (1 - this.timeScale) / (1 - SLOWMO_SCALE));
+    if (s.elapsed >= SLOWMO_TIME) this.endSlowmo();
   }
 
   endSlowmo() {
-    this.slowmo = 0;
+    this.slowmo = null;
     this.timeScale = 1;
-    this.ui.setSlowmo(0);
+    this.ui.setSlowmo(0, 0);
   }
 
   // 0 at the starting speed, 1 at top speed.

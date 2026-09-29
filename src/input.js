@@ -22,6 +22,7 @@ export class Input {
     this.handlers = { confirm: () => {}, pause: () => {} };
     this.padButtons = [];
     this.pad = [0, 0];
+    this.tilt = null; // optional Tilt steering source
     this.invertY = false;
     this.maxRadius = 64; // px of finger travel for full deflection
 
@@ -90,6 +91,11 @@ export class Input {
     this.joystick.classList.remove('active');
   }
 
+  // Current phone pose becomes "straight ahead" for tilt steering.
+  calibrate() {
+    this.tilt?.calibrate();
+  }
+
   // Call once per frame (also in menus, so the A/Start buttons work everywhere).
   update() {
     this.pad = this.pollGamepad();
@@ -128,6 +134,11 @@ export class Input {
     }
     x += this.pad[0];
     y += this.pad[1];
+    if (this.tilt) {
+      const [tx, ty] = this.tilt.axis();
+      x += tx;
+      y += ty;
+    }
     [x, y] = shapeAxis(x, y);
     return [x, this.invertY ? -y : y];
   }

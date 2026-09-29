@@ -20,7 +20,7 @@ function write(key, value) {
 }
 
 export function loadSettings() {
-  return { sound: true, music: true, invertY: false, ...read('settings', {}) };
+  return { sound: true, music: true, invertY: false, tilt: false, ...read('settings', {}) };
 }
 
 export function saveSettings(settings) {

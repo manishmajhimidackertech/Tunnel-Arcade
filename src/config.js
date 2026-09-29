@@ -23,6 +23,9 @@ export const START_SPEED = 16;
 export const MAX_SPEED = 72;
 export const ACCELERATION = 0.25; // units/s^2
 export const SCORE_PER_UNIT = 0.25;
+// The first slow-motion pickup waits until the run has built up real pace (~1 minute in);
+// after that they appear every few obstacles.
+export const FIRST_PICKUP_SPEED = 30;
 
 export const COUNTDOWN_STEP = 0.75; // seconds per "3", "2", "1", "GO!"
 

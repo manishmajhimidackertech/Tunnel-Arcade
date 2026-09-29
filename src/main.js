@@ -9,6 +9,7 @@ import { AudioEngine } from './audio.js';
 import { loadSettings, saveSettings, loadBest } from './storage.js';
 import { MODES } from './config.js';
 import { setupPwa } from './pwa.js';
+import { Tilt } from './tilt.js';
 
 const params = new URLSearchParams(location.search);
 const settings = loadSettings();
@@ -20,6 +21,10 @@ const input = new Input({
   knob: document.querySelector('#joystick .knob'),
 });
 input.invertY = settings.invertY;
+const tilt = new Tilt();
+input.tilt = tilt;
+const tiltSupported = Tilt.supported();
+if (!tiltSupported) settings.tilt = false;
 
 let game;
 try {
@@ -38,16 +43,24 @@ try {
 }
 
 for (const mode of Object.keys(MODES)) ui.setBest(mode, loadBest(mode));
+document.getElementById('tgl-tilt').hidden = !tiltSupported;
 ui.setToggles(settings);
 ui.show('menu');
 
 let lastMode = 'classic';
 
+// Phones play in landscape: go fullscreen and lock the orientation where the browser allows it
+// (Android Chrome); elsewhere the rotate prompt below asks the player to turn the phone.
 function enterFullscreen() {
   const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
   const touch = matchMedia('(pointer: coarse)').matches;
-  if (standalone || !touch || document.fullscreenElement) return;
-  document.documentElement.requestFullscreen?.({ navigationUI: 'hide' }).catch(() => {});
+  if (!touch) return;
+  const lock = () => screen.orientation?.lock?.('landscape').catch(() => {});
+  if (standalone || document.fullscreenElement) return lock();
+  document.documentElement
+    .requestFullscreen?.({ navigationUI: 'hide' })
+    .then(lock)
+    .catch(() => {});
 }
 
 function start(mode) {
@@ -55,6 +68,8 @@ function start(mode) {
   audio.unlock();
   audio.click();
   enterFullscreen();
+  // iOS forgets sensor permission between visits; this tap lets us ask again
+  if (settings.tilt && !tilt.enabled) tilt.enable();
   game.startRun(mode);
 }
 
@@ -88,6 +103,34 @@ on('tgl-music', () => {
   audio.startMusic();
 });
 on('tgl-invert', () => toggle('invertY'));
+document.getElementById('tgl-tilt').addEventListener('click', async () => {
+  audio.unlock();
+  audio.click();
+  if (settings.tilt) {
+    tilt.disable();
+    toggle('tilt');
+    return;
+  }
+  if (await tilt.enable()) toggle('tilt');
+  else ui.toast('Motion sensor access was not allowed. Tap to dismiss.');
+});
+if (settings.tilt) tilt.enable(); // works without a tap on Android; iOS asks again on Play
+
+// Ask phone players to turn to landscape; the run pauses while the phone is upright.
+const rotatePrompt = document.getElementById('rotate');
+const portraitPhone = matchMedia('(orientation: portrait) and (pointer: coarse)');
+let portraitAllowed = false;
+function checkOrientation() {
+  const show = portraitPhone.matches && !portraitAllowed;
+  rotatePrompt.hidden = !show;
+  if (show) game.pause();
+}
+portraitPhone.addEventListener('change', checkOrientation);
+document.getElementById('btn-portrait').addEventListener('click', () => {
+  portraitAllowed = true;
+  checkOrientation();
+});
+checkOrientation();
 
 // Keyboard / gamepad shortcuts mirror the on-screen buttons.
 input.on('confirm', () => {

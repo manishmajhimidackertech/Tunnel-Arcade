@@ -19,7 +19,15 @@ import {
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { TUNNEL_RADIUS, SHIP_RADIUS, SPAWN_AHEAD, DESPAWN_BEHIND, speedAt, difficultyAt } from '../config.js';
+import {
+  TUNNEL_RADIUS,
+  SHIP_RADIUS,
+  SPAWN_AHEAD,
+  DESPAWN_BEHIND,
+  FIRST_PICKUP_SPEED,
+  speedAt,
+  difficultyAt,
+} from '../config.js';
 import {
   rotate2,
   regularPolygon,
@@ -312,6 +320,7 @@ export class ObstacleField {
     this.nextS = Infinity;
     this.runStart = 0;
     this.untilPickup = Infinity;
+    this.pickupsPlaced = 0;
     // Set by the game: roll of the tunnel at a given distance (for pickup placement).
     this.rollAt = () => 0;
   }
@@ -328,7 +337,8 @@ export class ObstacleField {
     this.clear();
     this.nextS = firstS;
     this.runStart = runStart;
-    this.untilPickup = 4; // the first few obstacles never have a pickup
+    this.untilPickup = 1;
+    this.pickupsPlaced = 0;
   }
 
   // Seconds (in game time) the ship needs to fly from `from` to `to`.
@@ -384,9 +394,13 @@ export class ObstacleField {
     while (this.nextS < distance + SPAWN_AHEAD) {
       const d = difficultyAt(this.nextS - this.runStart);
       const spec = chooseObstacle(rng, d, mode);
-      if (--this.untilPickup <= 0) {
+      this.untilPickup--;
+      // the very first pickup also waits for the pace to build up
+      const fastEnough = this.pickupsPlaced > 0 || speedAt(this.nextS - this.runStart) >= FIRST_PICKUP_SPEED;
+      if (this.untilPickup <= 0 && fastEnough) {
         const extra = this.placePickup(rng, spec, distance);
         this.nextS += extra;
+        if (extra) this.pickupsPlaced++;
         this.untilPickup = extra ? 5 + Math.floor(rng() * 4) : 1; // no safe spot: try the next one
       }
       const length = this.spawn(spec, this.nextS);

@@ -114,11 +114,13 @@ export class AudioEngine {
     src.stop(t + 0.4);
   }
 
-  // Slow-motion start (down) and end (up): a pitch sweep with a shimmer on top.
+  // Slow-motion start (down) and end (up): a pitch sweep that lasts as long as the pace
+  // change itself, with a shimmer on top.
   timeShift(down) {
     const [from, to] = down ? [880, 160] : [160, 880];
-    this.tone(from, 0.7, { type: 'sine', vol: 0.3, slideTo: to });
-    this.tone(from * 1.5, 0.5, { type: 'triangle', vol: 0.08, slideTo: to * 1.5 });
+    const dur = down ? 0.9 : 1.5;
+    this.tone(from, dur, { type: 'sine', vol: 0.3, slideTo: to });
+    this.tone(from * 1.5, dur * 0.75, { type: 'triangle', vol: 0.08, slideTo: to * 1.5 });
     if (down) {
       this.tone(1568, 0.25, { type: 'square', vol: 0.05 });
       this.tone(2093, 0.3, { type: 'square', vol: 0.04, at: 0.08 });

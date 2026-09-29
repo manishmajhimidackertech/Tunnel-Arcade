@@ -41,10 +41,12 @@ export class UI {
       slowmo: $('slowmo'),
       slowmoBar: document.querySelector('#slowmo b'),
       bonus: $('bonus'),
+      tint: $('slowmo-tint'),
       install: $('btn-install'),
       sound: $('tgl-sound'),
       music: $('tgl-music'),
       invert: $('tgl-invert'),
+      tilt: $('tgl-tilt'),
     };
     this.lastScore = -1;
     this.countdownTimer = null;
@@ -78,17 +80,19 @@ export class UI {
     this.el.sound.setAttribute('aria-pressed', String(settings.sound));
     this.el.music.setAttribute('aria-pressed', String(settings.music));
     this.el.invert.setAttribute('aria-pressed', String(settings.invertY));
+    this.el.tilt.textContent = `Tilt steering: ${settings.tilt ? 'On' : 'Off'}`;
+    this.el.tilt.setAttribute('aria-pressed', String(settings.tilt));
   }
 
-  // fraction: remaining slow motion, 0..1 (0 hides the meter)
-  setSlowmo(fraction) {
+  // fraction: remaining slow motion, 0..1 (0 hides the meter); depth: how slowed the world is, 0..1
+  setSlowmo(fraction, depth) {
     const on = fraction > 0;
     if (this.slowmoOn !== on) {
       this.slowmoOn = on;
       this.el.slowmo.hidden = !on;
-      document.body.classList.toggle('slowmo', on);
     }
     if (on) this.el.slowmoBar.style.transform = `scaleX(${fraction})`;
+    this.el.tint.style.opacity = String(Math.max(0, Math.min(1, depth)));
   }
 
   slowmoPickup(points) {

@@ -171,13 +171,8 @@ body[data-screen='play'] #touch-layer {
   inset: 0;
   pointer-events: none;
   z-index: 3;
-  opacity: 0;
+  opacity: 0; /* driven every frame by how slowed the world is */
   background: radial-gradient(ellipse at center, rgba(95, 244, 255, 0) 55%, rgba(60, 200, 255, 0.35) 100%);
-  transition: opacity 0.4s;
-}
-
-body.slowmo #slowmo-tint {
-  opacity: 1;
 }
 
 /* ---------- Joystick ---------- */
@@ -502,6 +497,61 @@ body.slowmo #slowmo-tint {
   border: 1px solid rgba(120, 210, 255, 0.6);
   font-size: 13px;
   cursor: pointer;
+}
+
+/* ---------- Rotate-to-landscape prompt (phones in portrait) ---------- */
+
+#rotate {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  background: rgba(2, 7, 13, 0.94);
+  text-align: center;
+}
+
+#rotate p {
+  margin: 0;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 12px rgba(120, 210, 255, 0.7);
+}
+
+#rotate small {
+  max-width: 280px;
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0.7;
+}
+
+.rotate-phone {
+  width: 48px;
+  height: 84px;
+  margin-bottom: 8px;
+  border: 3px solid #9ff0ff;
+  border-radius: 10px;
+  box-shadow: 0 0 16px rgba(95, 244, 255, 0.6);
+  animation: rotate-phone 2.2s ease-in-out infinite;
+}
+
+@keyframes rotate-phone {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  55%,
+  85% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 #no-webgl {
