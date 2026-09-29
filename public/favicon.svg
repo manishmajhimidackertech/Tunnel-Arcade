@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.47" r="0.7"><stop offset="0" stop-color="#16395a"/><stop offset="1" stop-color="#02070d"/></radialGradient>
+    <radialGradient id="core"><stop offset="0" stop-color="#ffffff"/><stop offset="0.35" stop-color="#ffffff"/><stop offset="0.7" stop-color="#7fe8ff" stop-opacity="0.8"/><stop offset="1" stop-color="#3aa6ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="chrome" x1="0" y1="14" x2="0" y2="46" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffffff"/><stop offset="0.45" stop-color="#cfe7f7"/><stop offset="0.52" stop-color="#7d9db4"/><stop offset="1" stop-color="#e6f3fd"/></linearGradient>
+  </defs>
+  <path d="M64,32L64,42.7L63.9,46.2L63.8,48.6L63.6,50.6L63.3,52.3L63,53.8L62.6,55.1L62.2,56.3L61.7,57.3L61.2,58.2L60.5,59.1L59.9,59.9L59.1,60.5L58.2,61.2L57.3,61.7L56.3,62.2L55.1,62.6L53.8,63L52.3,63.3L50.6,63.6L48.6,63.8L46.2,63.9L42.7,64L32,64L21.3,64L17.8,63.9L15.4,63.8L13.4,63.6L11.7,63.3L10.2,63L8.9,62.6L7.7,62.2L6.7,61.7L5.8,61.2L4.9,60.5L4.1,59.9L3.5,59.1L2.8,58.2L2.3,57.3L1.8,56.3L1.4,55.1L1,53.8L0.7,52.3L0.4,50.6L0.2,48.6L0.1,46.2L0,42.7L0,32L0,21.3L0.1,17.8L0.2,15.4L0.4,13.4L0.7,11.7L1,10.2L1.4,8.9L1.8,7.7L2.3,6.7L2.8,5.8L3.5,4.9L4.1,4.1L4.9,3.5L5.8,2.8L6.7,2.3L7.7,1.8L8.9,1.4L10.2,1L11.7,0.7L13.4,0.4L15.4,0.2L17.8,0.1L21.3,0L32,0L42.7,0L46.2,0.1L48.6,0.2L50.6,0.4L52.3,0.7L53.8,1L55.1,1.4L56.3,1.8L57.3,2.3L58.2,2.8L59.1,3.5L59.9,4.1L60.5,4.9L61.2,5.8L61.7,6.7L62.2,7.7L62.6,8.9L63,10.2L63.3,11.7L63.6,13.4L63.8,15.4L63.9,17.8L64,21.3Z" fill="url(#bg)"/>
+  <polygon points="58.1,37 51.1,49.1 39,56.1 25,56.1 12.9,49.1 5.9,37 5.9,23 12.9,10.9 25,3.9 39,3.9 51.1,10.9 58.1,23" fill="none" stroke-linejoin="round" stroke="#5fd8ff" stroke-width="3.5"/>
+  <polygon points="47,34 43,41 36,45 28,45 21,41 17,34 17,26 21,19 28,15 36,15 43,19 47,26" fill="none" stroke-linejoin="round" stroke="url(#chrome)" stroke-width="5.5"/>
+  <circle cx="32" cy="30" r="9" fill="url(#core)"/>
+  <g transform="translate(32 46)">
+    <path d="M-5 -4 L-23 0 L-23 6 L-5 5 Z M5 -4 L23 0 L23 6 L5 5 Z" fill="#e8243f" stroke="#4a0813" stroke-width="1" stroke-linejoin="round"/>
+    <circle cx="0" cy="0.5" r="7.5" fill="#f2f5f8" stroke="#4a0813" stroke-width="1"/>
+    <circle cx="0" cy="1" r="4" fill="#9ff0ff"/>
+    <circle cx="0" cy="1" r="2.2" fill="#ffffff"/>
+  </g>
+</svg>
