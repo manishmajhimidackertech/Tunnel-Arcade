@@ -113,10 +113,11 @@ test('mine clusters stay inside the reachable area', () => {
   }
 });
 
-test('obstacle gaps shrink with difficulty but stay reactable', () => {
+test('obstacle gaps start relaxed and shrink with difficulty but stay reactable', () => {
   const rng = mulberry32(7);
   for (let i = 0; i < 200; i++) {
-    assert.ok(obstacleGapTime(rng, 1) >= 0.8);
-    assert.ok(obstacleGapTime(rng, 0) <= 2.0);
+    assert.ok(obstacleGapTime(rng, 1) >= 0.85);
+    const early = obstacleGapTime(rng, 0);
+    assert.ok(early >= 2 && early <= 2.6);
   }
 });

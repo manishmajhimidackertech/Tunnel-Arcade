@@ -1,4 +1,5 @@
 // Keyboard, on-screen joystick (touch/mouse drag) and gamepad, merged into one steering axis.
+import { shapeAxis } from './logic/steering.js';
 
 const KEY_AXES = {
   ArrowLeft: [-1, 0],
@@ -22,7 +23,7 @@ export class Input {
     this.padButtons = [];
     this.pad = [0, 0];
     this.invertY = false;
-    this.maxRadius = 52;
+    this.maxRadius = 64; // px of finger travel for full deflection
 
     window.addEventListener('keydown', (e) => {
       if (e.code in KEY_AXES || e.code === 'Space') e.preventDefault();
@@ -102,9 +103,9 @@ export class Input {
       if (pressed[0] && !this.padButtons[0]) this.handlers.confirm();
       if (pressed[9] && !this.padButtons[9]) this.handlers.pause();
       this.padButtons = pressed;
-      const dead = (v) => (Math.abs(v) < 0.15 ? 0 : (v - Math.sign(v) * 0.15) / 0.85);
-      let x = dead(pad.axes[0] || 0);
-      let y = -dead(pad.axes[1] || 0);
+      // deadzone and response curve are applied to the combined axis in axis()
+      let x = pad.axes[0] || 0;
+      let y = -(pad.axes[1] || 0);
       if (pressed[14]) x = -1;
       if (pressed[15]) x = 1;
       if (pressed[12]) y = 1;
@@ -127,11 +128,7 @@ export class Input {
     }
     x += this.pad[0];
     y += this.pad[1];
-    const len = Math.hypot(x, y);
-    if (len > 1) {
-      x /= len;
-      y /= len;
-    }
+    [x, y] = shapeAxis(x, y);
     return [x, this.invertY ? -y : y];
   }
 }
