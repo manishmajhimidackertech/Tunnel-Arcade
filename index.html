@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <title>Tunnel Trouble 3D</title>
+    <title>Tunnel Arcade</title>
     <meta name="description" content="Pilot your spaceship through an endless 3D tunnel. Dodge doors, bars and mines, and chase the highest score." />
     <meta name="theme-color" content="#02070d" />
     <meta name="color-scheme" content="dark" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Tunnel Trouble" />
+    <meta name="apple-mobile-web-app-title" content="Tunnel Arcade" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
     <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png" />
@@ -22,8 +22,11 @@
 
     <div id="hud" hidden>
       <button id="btn-pause" class="icon-btn" aria-label="Pause"><span></span><span></span></button>
+      <div id="slowmo" hidden><span>Slow-mo</span><i><b></b></i></div>
       <div id="score" aria-live="off">0</div>
     </div>
+    <div id="bonus" aria-hidden="true"></div>
+    <div id="slowmo-tint"></div>
 
     <div id="joystick" hidden aria-hidden="true"><div class="knob"></div></div>
     <canvas id="countdown" hidden aria-hidden="true"></canvas>
@@ -33,7 +36,7 @@
     <section id="menu" class="screen">
       <h1 class="logo">
         <span class="logo-line">Tunnel</span>
-        <span class="logo-line">Trouble <em>3D</em></span>
+        <span class="logo-line logo-accent">Arcade</span>
       </h1>
       <div class="menu-buttons">
         <button class="btn btn-blue" data-mode="classic">Classic<small data-best="classic"></small></button>
@@ -47,7 +50,8 @@
       </div>
       <p class="help">
         Drag anywhere to steer with the joystick &middot; Arrow keys / WASD &middot; Gamepad<br />
-        Fly through the gaps in doors, dodge the bars and don't touch the mines.
+        Fly through the gaps in doors, dodge the bars and don't touch the mines.<br />
+        Grab the glowing hourglass to slow down time.
       </p>
     </section>
 
@@ -75,7 +79,7 @@
 
     <div id="toast" hidden></div>
     <div id="no-webgl" hidden>
-      <p>Tunnel Trouble 3D needs WebGL. Please try a recent browser or enable hardware acceleration.</p>
+      <p>Tunnel Arcade needs WebGL. Please try a recent browser or enable hardware acceleration.</p>
     </div>
 
     <script type="module" src="/src/main.js"></script>

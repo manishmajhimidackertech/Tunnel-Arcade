@@ -1,6 +1,7 @@
-# Tunnel Trouble 3D (web / PWA)
+# Tunnel Arcade
 
-A port of the mobile game **Tunnel Trouble 3D** to the browser, built with [Three.js](https://threejs.org/).
+An endless 3D tunnel flyer for the browser, built with [Three.js](https://threejs.org/) and inspired by the
+mobile game *Tunnel Trouble 3D*.
 Pilot a small spaceship through an endless, twisting tunnel, slip through the gaps in the doors, dodge the
 bars and (in Mine Mode) steer around drifting mines. The game is an installable Progressive Web App that works
 fully offline once loaded.
@@ -12,6 +13,10 @@ fully offline once loaded.
   *Bunker* (concrete with small lamps) and *Catacomb* (sandstone arches). The style changes as you fly deeper.
 - **Obstacles:** red-rimmed doors with triangle, half, slot, cross, circle and spoke-shaped openings; striped bars (full,
   half, Y, twin, plus); spinning variants unlock as the run gets harder.
+- **Slow-motion pickups:** a glowing hourglass occasionally floats in the tunnel. Grabbing it slows the world down
+  for a few seconds (your steering stays at full speed) and adds a small score bonus. Pickups are never placed at
+  random: each one sits on a line that is guaranteed safe to fly straight through the next obstacle, accounting for
+  spinning doors, drifting mines and the tunnel's roll.
 - **Curving, rolling tunnel** using a vertex-shader bend, so the tunnel snakes and spirals ahead of you while collisions stay exact.
 - Green **LED dot-matrix "3-2-1-GO!"** countdown and tip banners, like the original.
 - **Controls:** floating on-screen joystick (drag anywhere), arrow keys / WASD, or a gamepad. Optional inverted Y axis.
@@ -65,6 +70,8 @@ src/game.js                renderer, game state machine, camera, difficulty and 
 src/config.js              tuning constants (speeds, sizes, distances)
 src/logic/collision.js     pure 2D/3D collision helpers
 src/logic/patterns.js      door/bar layouts, mine clusters and obstacle selection
+src/logic/pickups.js       safe placement of slow-motion pickups
+src/logic/steering.js      joystick response curve and steering easing
 src/world/tunnel.js        recycled tunnel segments and ribs
 src/world/themes.js        the four tunnel styles (procedural textures, fog, lighting)
 src/world/obstacles.js     door, bar and mine meshes, spawning and collision

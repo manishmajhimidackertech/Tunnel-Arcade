@@ -1,7 +1,8 @@
 // Service worker template. At build time vite.config.js replaces the two placeholders
 // with a content hash and the list of every emitted file, so the whole game is
 // precached on first visit and then runs offline.
-const CACHE = 'tunnel-trouble-__VERSION__';
+const CACHE = 'tunnel-arcade-__VERSION__';
+const OWN_CACHES = /^tunnel-(arcade|trouble)-/; // includes caches from before the rename
 const ASSETS = __ASSETS__;
 
 self.addEventListener('install', (event) => {
@@ -17,7 +18,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('tunnel-trouble-') && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => OWN_CACHES.test(k) && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });

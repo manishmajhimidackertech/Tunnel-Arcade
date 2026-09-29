@@ -37,6 +37,9 @@ import { bendUniform, bendAt, rollAt } from './world/bend.js';
 import { loadBest, saveBest } from './storage.js';
 
 const MENU_SPEED = 14;
+const SLOWMO_TIME = 4.5; // seconds of slow motion per pickup (real time)
+const SLOWMO_SCALE = 0.45; // how fast the world runs meanwhile; steering keeps full speed
+const PICKUP_BONUS = 25;
 const CRASH_DELAY = 1.5; // seconds between the crash and the results screen
 const THEME_COLORS = THEMES.map(themeColors);
 
@@ -78,6 +81,7 @@ export class Game {
     this.scene.add(this.root);
     this.tunnel = new Tunnel(this.root, envMap);
     this.obstacles = new ObstacleField(this.root);
+    this.obstacles.rollAt = (s) => this.rollFor(s);
     this.ship = new Ship();
     this.scene.add(this.ship.group);
     this.explosion = new Explosion(this.scene);
@@ -95,6 +99,9 @@ export class Game {
     this.pos = { x: 0, y: -1.2 };
     this.vel = { x: 0, y: 0 };
     this.follow = { x: 0, y: -1.2 }; // smoothed ship position the camera tracks
+    this.slowmo = 0; // seconds of slow motion left
+    this.timeScale = 1;
+    this.bonus = 0;
     this.roll = 0;
     this.frameTimes = [];
 
@@ -142,6 +149,8 @@ export class Game {
     this.vel = { x: 0, y: 0 };
     this.follow = { ...this.pos };
     this.ship.group.visible = true;
+    this.endSlowmo();
+    this.bonus = 0;
     this.score = 0;
     this.ui.setScore(0);
     this.state = 'countdown';
@@ -178,6 +187,7 @@ export class Game {
     this.speed = MENU_SPEED;
     this.ui.hideCountdown();
     this.ui.hideTip();
+    this.endSlowmo();
     this.ui.show('menu');
     this.audio.stopEngine();
     this.audio.resume();
@@ -187,6 +197,7 @@ export class Game {
     this.state = 'crashed';
     this.stateTime = 0;
     this.obstacles.stopSpawning();
+    this.endSlowmo();
     this.ship.group.visible = false;
     this.explosion.trigger(this.ship.group.position);
     this.shake = 1;
@@ -236,30 +247,34 @@ export class Game {
       this.speed = speedAt(Math.max(0, this.distance - this.goDistance));
       this.steer(dt);
     }
-    this.distance += this.speed * dt;
+    // Slow motion scales the world (travel, spinning, drifting) but not the ship's steering.
+    this.updateSlowmo(dt);
+    const worldDt = dt * this.timeScale;
+    this.distance += this.speed * worldDt;
 
     const run = Math.max(0, this.distance - this.goDistance);
     const inMenu = this.state === 'menu' || this.state === 'gameover';
     // Curves and roll build up slowly over the first few minutes to avoid motion sickness.
     const curve = inMenu ? 0.7 : Math.min(1, 0.3 + run / 2500);
     bendAt(this.distance, curve, bendUniform.value);
-    this.roll = rollAt(this.distance, inMenu ? 0.35 : Math.min(0.6, run / 4000));
+    this.roll = this.rollFor(this.distance);
     this.root.rotation.z = this.roll;
 
     this.tunnel.update(this.distance);
-    const passed = this.obstacles.update(dt, this.time, this.distance, this.rng, this.mode);
+    const passed = this.obstacles.update(worldDt, this.time, this.distance, this.rng, this.mode);
     if (this.running) this.whooshFor(passed);
 
     if (this.state === 'countdown') this.updateCountdown();
     if (this.state === 'playing') {
       const [lx, ly] = rotate2(this.pos.x, this.pos.y, -this.roll);
+      if (this.obstacles.collect(prev, this.distance, lx, ly)) this.startSlowmo();
       if (!this.debug.god && this.obstacles.collide(prev, this.distance, lx, ly)) {
         this.crash();
       } else {
-        this.score = Math.floor(run * SCORE_PER_UNIT);
+        this.score = Math.floor(run * SCORE_PER_UNIT) + this.bonus;
         this.ui.setScore(this.score);
       }
-      this.audio.setEngine(this.speedLevel());
+      this.audio.setEngine(this.speedLevel(), this.timeScale);
     }
 
     this.updateShip(dt);
@@ -291,6 +306,38 @@ export class Game {
       this.state = 'playing';
       this.goDistance = this.distance;
     }
+  }
+
+  // Tunnel roll at distance `s`; it builds up slowly over a run to avoid motion sickness.
+  rollFor(s) {
+    const inMenu = this.state === 'menu' || this.state === 'gameover';
+    return rollAt(s, inMenu ? 0.35 : Math.min(0.6, Math.max(0, s - this.goDistance) / 4000));
+  }
+
+  startSlowmo() {
+    const wasSlow = this.slowmo > 0;
+    this.slowmo = SLOWMO_TIME;
+    this.bonus += PICKUP_BONUS;
+    this.ui.slowmoPickup(PICKUP_BONUS);
+    if (!wasSlow) this.audio.timeShift(true);
+    else this.audio.click();
+  }
+
+  updateSlowmo(dt) {
+    if (this.slowmo > 0) {
+      this.slowmo = Math.max(0, this.slowmo - dt);
+      if (this.slowmo === 0) this.audio.timeShift(false);
+    }
+    // ease in quickly, and ease back out over the last moments
+    const target = this.slowmo > 0.6 ? SLOWMO_SCALE : SLOWMO_SCALE + (1 - SLOWMO_SCALE) * (1 - this.slowmo / 0.6);
+    this.timeScale += (target - this.timeScale) * (1 - Math.exp(-dt * 8));
+    this.ui.setSlowmo(this.slowmo / SLOWMO_TIME);
+  }
+
+  endSlowmo() {
+    this.slowmo = 0;
+    this.timeScale = 1;
+    this.ui.setSlowmo(0);
   }
 
   // 0 at the starting speed, 1 at top speed.

@@ -114,6 +114,17 @@ export class AudioEngine {
     src.stop(t + 0.4);
   }
 
+  // Slow-motion start (down) and end (up): a pitch sweep with a shimmer on top.
+  timeShift(down) {
+    const [from, to] = down ? [880, 160] : [160, 880];
+    this.tone(from, 0.7, { type: 'sine', vol: 0.3, slideTo: to });
+    this.tone(from * 1.5, 0.5, { type: 'triangle', vol: 0.08, slideTo: to * 1.5 });
+    if (down) {
+      this.tone(1568, 0.25, { type: 'square', vol: 0.05 });
+      this.tone(2093, 0.3, { type: 'square', vol: 0.04, at: 0.08 });
+    }
+  }
+
   explosion() {
     if (!this.ctx) return;
     const c = this.ctx;
@@ -166,12 +177,12 @@ export class AudioEngine {
     this.engine = { out, lp, oscs, air, airGain, bp };
   }
 
-  // level: 0 (start speed) .. 1 (top speed)
-  setEngine(level) {
+  // level: 0 (start speed) .. 1 (top speed); rate < 1 during slow motion drops the pitch
+  setEngine(level, rate = 1) {
     if (!this.engine) return;
     const t = this.ctx.currentTime;
     const e = this.engine;
-    for (const o of e.oscs) o.frequency.setTargetAtTime(52 + level * 46, t, 0.1);
+    for (const o of e.oscs) o.frequency.setTargetAtTime((52 + level * 46) * (0.55 + 0.45 * rate), t, 0.1);
     e.lp.frequency.setTargetAtTime(320 + level * 900, t, 0.1);
     e.airGain.gain.setTargetAtTime(0.02 + level * 0.06, t, 0.1);
     e.bp.frequency.setTargetAtTime(700 + level * 1400, t, 0.1);

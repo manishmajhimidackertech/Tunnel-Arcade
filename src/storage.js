@@ -1,9 +1,10 @@
 // localStorage wrappers that never throw (private mode, blocked storage, etc.).
-const PREFIX = 'tunnel-trouble-3d.';
+const PREFIX = 'tunnel-arcade.';
+const OLD_PREFIX = 'tunnel-trouble-3d.'; // before the game was renamed; still read so scores carry over
 
 function read(key, fallback) {
   try {
-    const raw = localStorage.getItem(PREFIX + key);
+    const raw = localStorage.getItem(PREFIX + key) ?? localStorage.getItem(OLD_PREFIX + key);
     return raw === null ? fallback : JSON.parse(raw);
   } catch {
     return fallback;

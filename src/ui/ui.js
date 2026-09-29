@@ -10,9 +10,11 @@ const TIPS = {
     ['Make the highest score in the world', 'red'],
     ['Real 3D space adventure', 'blue'],
     ['Watch out for spinning bars', 'green'],
+    ['Grab the hourglass to slow down time', 'blue'],
   ],
   mines: [
     ['Enjoy mine mode, be aware of mines', 'blue'],
+    ['Grab the hourglass to slow down time', 'green'],
     ['Mines drift around the tunnel. Keep moving!', 'red'],
     ['Control the spaceship by joystick', 'green'],
   ],
@@ -36,6 +38,9 @@ export class UI {
       newRecord: $('new-record'),
       crashTitle: $('crash-title'),
       toast: $('toast'),
+      slowmo: $('slowmo'),
+      slowmoBar: document.querySelector('#slowmo b'),
+      bonus: $('bonus'),
       install: $('btn-install'),
       sound: $('tgl-sound'),
       music: $('tgl-music'),
@@ -73,6 +78,25 @@ export class UI {
     this.el.sound.setAttribute('aria-pressed', String(settings.sound));
     this.el.music.setAttribute('aria-pressed', String(settings.music));
     this.el.invert.setAttribute('aria-pressed', String(settings.invertY));
+  }
+
+  // fraction: remaining slow motion, 0..1 (0 hides the meter)
+  setSlowmo(fraction) {
+    const on = fraction > 0;
+    if (this.slowmoOn !== on) {
+      this.slowmoOn = on;
+      this.el.slowmo.hidden = !on;
+      document.body.classList.toggle('slowmo', on);
+    }
+    if (on) this.el.slowmoBar.style.transform = `scaleX(${fraction})`;
+  }
+
+  slowmoPickup(points) {
+    const b = this.el.bonus;
+    b.textContent = `+${points} SLOW-MO`;
+    b.classList.remove('show');
+    void b.offsetWidth;
+    b.classList.add('show');
   }
 
   countdown(text) {

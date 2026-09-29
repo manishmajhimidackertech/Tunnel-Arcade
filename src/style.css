@@ -95,6 +95,91 @@ body[data-screen='play'] #touch-layer {
   background: #dff3ff;
 }
 
+/* ---------- Slow motion ---------- */
+
+#slowmo {
+  position: absolute;
+  left: 50%;
+  top: calc(16px + var(--safe-top));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #9ff6ff;
+  text-shadow: 0 0 8px rgba(95, 244, 255, 0.9);
+}
+
+#slowmo i {
+  display: block;
+  width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(95, 244, 255, 0.18);
+  overflow: hidden;
+}
+
+#slowmo b {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5ff4ff, #ffd36a);
+  box-shadow: 0 0 10px #5ff4ff;
+  transform-origin: left;
+}
+
+#bonus {
+  position: fixed;
+  left: 50%;
+  top: 32%;
+  transform: translate(-50%, 0);
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  font-weight: 900;
+  font-size: clamp(18px, 4.5vmin, 36px);
+  letter-spacing: 0.12em;
+  color: #bff9ff;
+  text-shadow: 0 0 14px rgba(95, 244, 255, 0.95);
+}
+
+#bonus.show {
+  animation: bonus 1.2s ease-out;
+}
+
+@keyframes bonus {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -40px) scale(1);
+  }
+}
+
+/* cyan vignette while time is slowed */
+#slowmo-tint {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(95, 244, 255, 0) 55%, rgba(60, 200, 255, 0.35) 100%);
+  transition: opacity 0.4s;
+}
+
+body.slowmo #slowmo-tint {
+  opacity: 1;
+}
+
 /* ---------- Joystick ---------- */
 
 #joystick {
@@ -279,10 +364,9 @@ body[data-screen='play'] #touch-layer {
   color: transparent;
 }
 
-.logo em {
-  font-style: normal;
+.logo-accent {
+  background: none;
   color: var(--led);
-  -webkit-text-fill-color: var(--led);
   text-shadow: 0 0 18px rgba(57, 255, 90, 0.8);
 }
 

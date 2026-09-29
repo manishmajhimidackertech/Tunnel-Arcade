@@ -2,7 +2,7 @@
   "name": "tunnel-arcade",
   "private": true,
   "version": "1.0.0",
-  "description": "Tunnel Trouble 3D ported to the web as an installable, offline-capable PWA built with Three.js.",
+  "description": "Tunnel Arcade: an endless 3D tunnel flyer, playable as an installable, offline-capable PWA built with Three.js.",
   "type": "module",
   "scripts": {
     "dev": "vite",

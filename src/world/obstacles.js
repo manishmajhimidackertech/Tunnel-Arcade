@@ -3,6 +3,7 @@ import {
   AdditiveBlending,
   ConeGeometry,
   CylinderGeometry,
+  DoubleSide,
   ExtrudeGeometry,
   Group,
   IcosahedronGeometry,
@@ -28,6 +29,7 @@ import {
   sweptPointDistance,
 } from '../logic/collision.js';
 import { DOOR_TEMPLATES, BAR_TEMPLATES, chooseObstacle, obstacleGapTime } from '../logic/patterns.js';
+import { findPickupSpot } from '../logic/pickups.js';
 import { doorTextures, stripeTexture, radialGlowTexture } from './textures.js';
 import { withBend } from './bend.js';
 import { polygonRing } from './tunnel.js';
@@ -35,6 +37,7 @@ import { polygonRing } from './tunnel.js';
 const DOOR_RADIUS = TUNNEL_RADIUS + 0.4;
 const DOOR_DEPTH = 0.5;
 const MINE_RADIUS = 0.9;
+const PICKUP_REACH = SHIP_RADIUS + 0.95; // generous grab radius
 
 const toV = ([x, y]) => new Vector2(x, y);
 
@@ -83,6 +86,26 @@ class Assets {
     );
     this.mineBandGeometry = new TorusGeometry(0.67, 0.09, 6, 28);
     this.mineBandMaterial = withBend(new MeshStandardMaterial({ color: '#000000', emissive: '#ff2020', emissiveIntensity: 3.5 }));
+    // Slow-motion pickup: a glowing gold hourglass inside a spinning cyan ring (gold stands out in every style).
+    const bulb = new ConeGeometry(0.42, 0.62, 12);
+    bulb.rotateX(Math.PI); // tip down, so two bulbs meet at their tips
+    bulb.translate(0, 0.31, 0);
+    const lower = bulb.clone();
+    lower.rotateX(Math.PI);
+    this.hourglassGeometry = mergeGeometries([bulb, lower]);
+    this.hourglassMaterial = withBend(
+      new MeshStandardMaterial({ color: '#2a1a00', emissive: '#ffc94a', emissiveIntensity: 3, side: DoubleSide }),
+    );
+    this.pickupRingGeometry = new TorusGeometry(0.78, 0.06, 8, 36);
+    this.pickupRingMaterial = withBend(new MeshStandardMaterial({ color: '#000000', emissive: '#5ff4ff', emissiveIntensity: 3 }));
+    this.pickupGlowMaterial = withBend(
+      new SpriteMaterial({
+        map: radialGlowTexture('rgba(255,250,225,1)', 'rgba(255,190,60,0.7)'),
+        blending: AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+      }),
+    );
     this.mineGlowMaterial = withBend(
       new SpriteMaterial({
         map: radialGlowTexture('rgba(255,230,210,1)', 'rgba(255,40,30,0.7)'),
@@ -248,18 +271,55 @@ class Mine {
   }
 }
 
+class Pickup {
+  constructor(assets, x, y, s) {
+    this.kind = 'pickup';
+    this.s = s;
+    this.x = x;
+    this.y = y;
+    this.group = new Group();
+    this.group.position.set(x, y, 0);
+    this.spinner = new Group();
+    this.spinner.add(new Mesh(assets.hourglassGeometry, assets.hourglassMaterial));
+    this.ring = new Mesh(assets.pickupRingGeometry, assets.pickupRingMaterial);
+    this.glow = new Sprite(assets.pickupGlowMaterial);
+    this.glow.scale.setScalar(4);
+    this.group.add(this.spinner, this.ring, this.glow);
+    this.spinner.scale.setScalar(1.5);
+    this.ring.scale.setScalar(1.5);
+    noCull(this.group);
+  }
+
+  update(dt, time) {
+    this.spinner.rotation.y += dt * 2.2;
+    this.spinner.rotation.z = Math.sin(time * 1.7) * 0.35;
+    this.ring.rotation.x += dt * 1.6;
+    this.ring.rotation.y += dt * 1.1;
+    this.glow.scale.setScalar(3.8 + Math.sin(time * 5) * 0.6);
+  }
+
+  reached(s0, s1, x, y) {
+    return sweptPointDistance(x, y, s0, s1, this.x, this.y, this.s) < PICKUP_REACH;
+  }
+}
+
 export class ObstacleField {
   constructor(root) {
     this.root = root;
     this.assets = new Assets();
     this.items = [];
+    this.pickups = [];
     this.nextS = Infinity;
     this.runStart = 0;
+    this.untilPickup = Infinity;
+    // Set by the game: roll of the tunnel at a given distance (for pickup placement).
+    this.rollAt = () => 0;
   }
 
   clear() {
-    for (const item of this.items) this.root.remove(item.group);
+    for (const item of [...this.items, ...this.pickups]) this.root.remove(item.group);
     this.items = [];
+    this.pickups = [];
     this.nextS = Infinity;
   }
 
@@ -268,6 +328,37 @@ export class ObstacleField {
     this.clear();
     this.nextS = firstS;
     this.runStart = runStart;
+    this.untilPickup = 4; // the first few obstacles never have a pickup
+  }
+
+  // Seconds (in game time) the ship needs to fly from `from` to `to`.
+  travelTime(from, to) {
+    let t = 0;
+    for (let s = from; s < to; s += 2) t += Math.min(2, to - s) / speedAt(s - this.runStart);
+    return t;
+  }
+
+  // Try to put a slow-motion pickup in front of the obstacle about to spawn. The obstacle is
+  // pushed back to make room, and the pickup sits on a line that is safe to fly straight
+  // through it. Returns the extra spacing used, or 0 if no safe spot was found.
+  placePickup(rng, spec, distance) {
+    const speed = speedAt(this.nextS - this.runStart);
+    const extra = Math.max(16, speed * 1.1);
+    const lead = Math.max(14, speed * 0.9); // time to settle on the line before the obstacle
+    const sObstacle = this.nextS + extra;
+    const sPickup = sObstacle - lead;
+    const rollThere = this.rollAt(sPickup);
+    const spot = findPickupSpot(
+      rng,
+      spec,
+      (ds) => this.travelTime(distance, sObstacle + ds),
+      (ds) => this.rollAt(sObstacle + ds) - rollThere,
+    );
+    if (!spot) return 0;
+    const pickup = new Pickup(this.assets, spot[0], spot[1], sPickup);
+    this.pickups.push(pickup);
+    this.root.add(pickup.group);
+    return extra;
   }
 
   stopSpawning() {
@@ -292,9 +383,24 @@ export class ObstacleField {
   update(dt, time, distance, rng, mode) {
     while (this.nextS < distance + SPAWN_AHEAD) {
       const d = difficultyAt(this.nextS - this.runStart);
-      const length = this.spawn(chooseObstacle(rng, d, mode), this.nextS);
+      const spec = chooseObstacle(rng, d, mode);
+      if (--this.untilPickup <= 0) {
+        const extra = this.placePickup(rng, spec, distance);
+        this.nextS += extra;
+        this.untilPickup = extra ? 5 + Math.floor(rng() * 4) : 1; // no safe spot: try the next one
+      }
+      const length = this.spawn(spec, this.nextS);
       this.nextS += length + obstacleGapTime(rng, d) * speedAt(this.nextS - this.runStart);
     }
+    this.pickups = this.pickups.filter((p) => {
+      if (p.s < distance - DESPAWN_BEHIND) {
+        this.root.remove(p.group);
+        return false;
+      }
+      p.update(dt, time);
+      p.group.position.z = -(p.s - distance);
+      return true;
+    });
     const passed = [];
     this.items = this.items.filter((item) => {
       if (item.s < distance - DESPAWN_BEHIND) {
@@ -319,6 +425,15 @@ export class ObstacleField {
       if (item.hits(s0, s1, x, y)) return item;
     }
     return null;
+  }
+
+  // Returns true (and removes the pickup) if the ship flew through one this frame.
+  collect(s0, s1, x, y) {
+    const i = this.pickups.findIndex((p) => p.reached(s0, s1, x, y));
+    if (i < 0) return false;
+    this.root.remove(this.pickups[i].group);
+    this.pickups.splice(i, 1);
+    return true;
   }
 
   // Distance to the nearest obstacle ahead, used for the "incoming" audio cue.
