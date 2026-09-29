@@ -143,11 +143,12 @@ export class Ship {
   // vx/vy are the ship's lateral velocity; used for banking.
   animate(dt, vx, vy, boost = 1) {
     this.time += dt;
-    const bank = -vx * 0.075;
-    const pitch = vy * 0.045;
-    this.model.rotation.z += (bank - this.model.rotation.z) * Math.min(1, dt * 8);
-    this.model.rotation.x += (pitch - this.model.rotation.x) * Math.min(1, dt * 8);
-    this.model.rotation.y += (-vx * 0.03 - this.model.rotation.y) * Math.min(1, dt * 8);
+    const bank = -vx * 0.06;
+    const pitch = vy * 0.04;
+    const k = 1 - Math.exp(-dt * 6);
+    this.model.rotation.z += (bank - this.model.rotation.z) * k;
+    this.model.rotation.x += (pitch - this.model.rotation.x) * k;
+    this.model.rotation.y += (-vx * 0.03 - this.model.rotation.y) * k;
     this.model.position.y = Math.sin(this.time * 3.1) * 0.035;
     const flicker = 0.92 + Math.sin(this.time * 47) * 0.05 + Math.sin(this.time * 31) * 0.04;
     this.glow.scale.setScalar(1.7 * flicker * boost);

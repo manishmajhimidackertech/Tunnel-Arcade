@@ -146,5 +146,5 @@ export function chooseObstacle(rng, difficulty, mode) {
 
 // Seconds of flight between consecutive obstacles; shrinks as the run gets harder.
 export function obstacleGapTime(rng, difficulty) {
-  return 1.55 - difficulty * 0.75 + rng() * 0.45;
+  return 2.1 - difficulty * 1.2 + rng() * 0.4;
 }

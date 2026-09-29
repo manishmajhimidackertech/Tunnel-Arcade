@@ -17,12 +17,16 @@ import {
   MAX_SPEED,
   MODES,
   SCORE_PER_UNIT,
+  SHIP_ACCEL,
+  SHIP_BRAKE,
+  SHIP_LATERAL_BONUS,
   SHIP_LATERAL_SPEED,
   SHIP_LIMIT,
   START_SPEED,
   speedAt,
 } from './config.js';
 import { rotate2 } from './logic/collision.js';
+import { steerVelocity } from './logic/steering.js';
 import { mulberry32 } from './logic/patterns.js';
 import { Tunnel, themeIndexAt } from './world/tunnel.js';
 import { THEMES, themeColors } from './world/themes.js';
@@ -90,6 +94,7 @@ export class Game {
     this.shake = 0;
     this.pos = { x: 0, y: -1.2 };
     this.vel = { x: 0, y: 0 };
+    this.follow = { x: 0, y: -1.2 }; // smoothed ship position the camera tracks
     this.roll = 0;
     this.frameTimes = [];
 
@@ -109,9 +114,9 @@ export class Game {
 
   // Keep a sensible horizontal field of view in portrait so the tunnel still fits.
   updateFov() {
-    const level = Math.max(0, (this.speed - START_SPEED) / (MAX_SPEED - START_SPEED));
-    const base = 68 + level * 10;
-    const minH = 64 + level * 8;
+    const level = this.speedLevel();
+    const base = 68 + level * 7;
+    const minH = 64 + level * 5;
     const needed = (2 * Math.atan(Math.tan((minH * Math.PI) / 360) / this.camera.aspect) * 180) / Math.PI;
     const fov = Math.max(base, needed);
     if (Math.abs(fov - this.camera.fov) > 0.05) {
@@ -131,10 +136,11 @@ export class Game {
     this.speed = START_SPEED;
     this.goDistance = START_SPEED * COUNTDOWN_STEP * 3;
     this.tunnel.reset(0);
-    this.obstacles.start(this.goDistance + START_SPEED * 2.2, this.goDistance);
+    this.obstacles.start(this.goDistance + START_SPEED * 3, this.goDistance);
     this.explosion.reset();
     this.pos = { x: 0, y: -1.2 };
     this.vel = { x: 0, y: 0 };
+    this.follow = { ...this.pos };
     this.ship.group.visible = true;
     this.score = 0;
     this.ui.setScore(0);
@@ -234,9 +240,10 @@ export class Game {
 
     const run = Math.max(0, this.distance - this.goDistance);
     const inMenu = this.state === 'menu' || this.state === 'gameover';
-    const curve = inMenu ? 0.8 : Math.min(1, 0.35 + run / 900);
+    // Curves and roll build up slowly over the first few minutes to avoid motion sickness.
+    const curve = inMenu ? 0.7 : Math.min(1, 0.3 + run / 2500);
     bendAt(this.distance, curve, bendUniform.value);
-    this.roll = rollAt(this.distance, inMenu ? 0.5 : Math.min(0.85, run / 1400));
+    this.roll = rollAt(this.distance, inMenu ? 0.35 : Math.min(0.6, run / 4000));
     this.root.rotation.z = this.roll;
 
     this.tunnel.update(this.distance);
@@ -252,7 +259,7 @@ export class Game {
         this.score = Math.floor(run * SCORE_PER_UNIT);
         this.ui.setScore(this.score);
       }
-      this.audio.setEngine((this.speed - START_SPEED) / (MAX_SPEED - START_SPEED));
+      this.audio.setEngine(this.speedLevel());
     }
 
     this.updateShip(dt);
@@ -286,12 +293,15 @@ export class Game {
     }
   }
 
+  // 0 at the starting speed, 1 at top speed.
+  speedLevel() {
+    return Math.max(0, Math.min(1, (this.speed - START_SPEED) / (MAX_SPEED - START_SPEED)));
+  }
+
   steer(dt) {
     const [ax, ay] = this.input.axis();
-    const lateral = SHIP_LATERAL_SPEED * (1 + Math.min(0.35, (this.speed - START_SPEED) / 150));
-    const k = Math.min(1, dt * 10);
-    this.vel.x += (ax * lateral - this.vel.x) * k;
-    this.vel.y += (ay * lateral - this.vel.y) * k;
+    const lateral = SHIP_LATERAL_SPEED + SHIP_LATERAL_BONUS * this.speedLevel();
+    steerVelocity(this.vel, ax * lateral, ay * lateral, dt, SHIP_ACCEL, SHIP_BRAKE);
     this.pos.x += this.vel.x * dt;
     this.pos.y += this.vel.y * dt;
     const r = Math.hypot(this.pos.x, this.pos.y);
@@ -321,19 +331,23 @@ export class Game {
 
   updateShip(dt) {
     this.ship.group.position.set(this.pos.x, this.pos.y, 0);
-    const boost = 1 + Math.max(0, (this.speed - START_SPEED) / (MAX_SPEED - START_SPEED)) * 0.35;
+    const boost = 1 + this.speedLevel() * 0.35;
     this.ship.animate(dt, this.vel.x, this.vel.y, boost);
   }
 
+  // The camera trails the ship softly instead of being bolted to it; only crashes shake it.
   updateCamera(dt) {
     this.shake = Math.max(0, this.shake - dt * 1.4);
-    const level = Math.max(0, (this.speed - START_SPEED) / (MAX_SPEED - START_SPEED));
-    const jitter = this.shake * this.shake * 0.6 + (this.state === 'playing' ? level * 0.025 : 0);
+    const k = 1 - Math.exp(-dt * 3.5);
+    this.follow.x += (this.pos.x - this.follow.x) * k;
+    this.follow.y += (this.pos.y - this.follow.y) * k;
+    const jitter = this.shake * this.shake * 0.6;
     const jx = (Math.random() - 0.5) * jitter;
     const jy = (Math.random() - 0.5) * jitter;
-    this.camera.position.set(this.pos.x * 0.55 + jx, this.pos.y * 0.55 + 1.0 + jy, CAMERA_DISTANCE);
-    this.camera.lookAt(this.pos.x * 0.3, this.pos.y * 0.3 + 0.45, -40);
-    this.headlight.position.set(this.pos.x * 0.4, this.pos.y * 0.4 + 0.5, -16);
+    const { x, y } = this.follow;
+    this.camera.position.set(x * 0.45 + jx, y * 0.45 + 1.0 + jy, CAMERA_DISTANCE);
+    this.camera.lookAt(x * 0.25, y * 0.25 + 0.45, -40);
+    this.headlight.position.set(x * 0.4, y * 0.4 + 0.5, -16);
   }
 
   // Fog and ambient light fade toward the style of the tunnel ahead.
