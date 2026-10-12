@@ -103,6 +103,27 @@ on('tgl-music', () => {
   audio.startMusic();
 });
 on('tgl-invert', () => toggle('invertY'));
+
+on('btn-settings', () => ui.openOverlay('settings'));
+on('btn-howto', () => ui.openOverlay('howto'));
+for (const name of ['settings', 'howto']) {
+  const overlay = document.getElementById(name);
+  overlay.querySelector('[data-close]').addEventListener('click', () => {
+    audio.click();
+    ui.closeOverlay();
+  });
+  // tapping the dimmed area around the panel also closes it
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) ui.closeOverlay();
+  });
+}
+
+const sensitivity = document.getElementById('sensitivity');
+sensitivity.addEventListener('input', () => {
+  settings.sensitivity = Number(sensitivity.value) / 100;
+  ui.setToggles(settings);
+});
+sensitivity.addEventListener('change', () => saveSettings(settings));
 document.getElementById('tgl-tilt').addEventListener('click', async () => {
   audio.unlock();
   audio.click();
@@ -134,12 +155,14 @@ checkOrientation();
 
 // Keyboard / gamepad shortcuts mirror the on-screen buttons.
 input.on('confirm', () => {
+  if (ui.overlay) return; // Enter/Space act on the focused control inside the panel
   if (game.state === 'menu') start(lastMode);
   else if (game.state === 'gameover') start(lastMode);
   else if (game.state === 'paused') game.resume();
 });
 input.on('pause', () => {
-  if (game.state === 'paused') game.resume();
+  if (ui.overlay) ui.closeOverlay();
+  else if (game.state === 'paused') game.resume();
   else if (game.running) game.pause();
   else if (game.state === 'gameover') game.toMenu();
 });

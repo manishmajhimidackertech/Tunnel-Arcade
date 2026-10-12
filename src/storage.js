@@ -19,8 +19,14 @@ function write(key, value) {
   }
 }
 
+export const SENSITIVITY_MIN = 0.5;
+export const SENSITIVITY_MAX = 1.5;
+
 export function loadSettings() {
-  return { sound: true, music: true, invertY: false, tilt: false, ...read('settings', {}) };
+  const settings = { sound: true, music: true, invertY: false, tilt: false, sensitivity: 1, ...read('settings', {}) };
+  const s = Number(settings.sensitivity);
+  settings.sensitivity = Number.isFinite(s) ? Math.min(SENSITIVITY_MAX, Math.max(SENSITIVITY_MIN, s)) : 1;
+  return settings;
 }
 
 export function saveSettings(settings) {

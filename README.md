@@ -21,7 +21,8 @@ fully offline once loaded.
 - **Curving, rolling tunnel** using a vertex-shader bend, so the tunnel snakes and spirals ahead of you while collisions stay exact.
 - Green **LED dot-matrix "3-2-1-GO!"** countdown and tip banners, like the original.
 - **Controls:** floating on-screen joystick (drag anywhere), arrow keys / WASD, a gamepad, or **tilt steering** on
-  phones and tablets (toggle it in the menu). Optional inverted Y axis.
+  phones and tablets. Sound, music, tilt steering, an inverted Y axis and steering sensitivity live in the
+  menu's **Settings** panel; **How to Play** explains the controls.
 - **Landscape on phones:** the game asks you to rotate a phone held upright (and pauses a run if you do), and locks
   to landscape where the browser allows it.
 - **Synthesised audio:** engine hum, whooshes, explosion and a looping synthwave track, all generated with WebAudio (no audio files).
