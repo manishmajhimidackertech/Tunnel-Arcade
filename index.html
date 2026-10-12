@@ -42,18 +42,51 @@
         <button class="btn btn-blue" data-mode="classic">Classic<small data-best="classic"></small></button>
         <button class="btn btn-red" data-mode="mines">Mine Mode<small data-best="mines"></small></button>
       </div>
-      <div class="chips">
-        <button id="tgl-sound" class="chip" aria-pressed="true">Sound</button>
-        <button id="tgl-music" class="chip" aria-pressed="true">Music</button>
-        <button id="tgl-invert" class="chip" aria-pressed="false">Invert Y</button>
-        <button id="tgl-tilt" class="chip" aria-pressed="false" hidden>Tilt steering</button>
-        <button id="btn-install" class="chip chip-accent" hidden>Install App</button>
+      <div class="menu-extras">
+        <button id="btn-settings" class="btn btn-small btn-steel">Settings</button>
+        <button id="btn-howto" class="btn btn-small btn-steel">How to Play</button>
       </div>
-      <p class="help">
-        Drag anywhere to steer with the joystick &middot; Arrow keys / WASD &middot; Gamepad<br />
-        Fly through the gaps in doors, dodge the bars and don't touch the mines.<br />
-        Grab the glowing hourglass to slow down time.
-      </p>
+    </section>
+
+    <section id="settings" class="screen overlay" hidden>
+      <div class="panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <h2 id="settings-title" class="panel-heading">Settings</h2>
+        <div class="setting-list">
+          <button id="tgl-sound" class="setting" role="switch" aria-checked="true">
+            <span>Sound</span><i class="switch" aria-hidden="true"></i>
+          </button>
+          <button id="tgl-music" class="setting" role="switch" aria-checked="true">
+            <span>Music</span><i class="switch" aria-hidden="true"></i>
+          </button>
+          <button id="tgl-invert" class="setting" role="switch" aria-checked="false">
+            <span>Invert Y</span><i class="switch" aria-hidden="true"></i>
+          </button>
+          <button id="tgl-tilt" class="setting" role="switch" aria-checked="false" hidden>
+            <span>Tilt steering</span><i class="switch" aria-hidden="true"></i>
+          </button>
+          <label class="setting setting-slider" for="sensitivity">
+            <span>Sensitivity <output id="sensitivity-value" for="sensitivity">100%</output></span>
+            <input id="sensitivity" type="range" min="50" max="150" step="5" value="100" />
+          </label>
+          <button id="btn-install" class="setting setting-accent" hidden><span>Install App</span></button>
+        </div>
+        <button class="btn btn-small btn-green" data-close>Done</button>
+      </div>
+    </section>
+
+    <section id="howto" class="screen overlay" hidden>
+      <div class="panel" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+        <h2 id="howto-title" class="panel-heading">How to Play</h2>
+        <ul class="howto-list">
+          <li><b>Steer</b> by dragging anywhere on the screen (floating joystick), with the arrow keys / WASD, or a gamepad.</li>
+          <li><b>Tilt steering</b> (phones): turn it on in Settings, then tilt the phone toward where you want to go.</li>
+          <li><b>Fly through the gaps</b> in the doors and dodge the bars.</li>
+          <li><b>Mine Mode:</b> don't touch the mines drifting around the tunnel.</li>
+          <li><b>Grab the glowing hourglass</b> to slow down time.</li>
+          <li><b>Pause</b> with the button at the top left, Esc or P.</li>
+        </ul>
+        <button class="btn btn-small btn-green" data-close>Got it</button>
+      </div>
     </section>
 
     <section id="pause" class="screen" hidden>

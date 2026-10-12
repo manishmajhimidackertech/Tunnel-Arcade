@@ -352,7 +352,7 @@ export class Game {
 
   steer(dt) {
     const [ax, ay] = this.input.axis();
-    const lateral = SHIP_LATERAL_SPEED + SHIP_LATERAL_BONUS * this.speedLevel();
+    const lateral = (SHIP_LATERAL_SPEED + SHIP_LATERAL_BONUS * this.speedLevel()) * this.settings.sensitivity;
     steerVelocity(this.vel, ax * lateral, ay * lateral, dt, SHIP_ACCEL, SHIP_BRAKE);
     this.pos.x += this.vel.x * dt;
     this.pos.y += this.vel.y * dt;

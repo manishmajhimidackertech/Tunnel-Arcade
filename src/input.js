@@ -27,6 +27,8 @@ export class Input {
     this.maxRadius = 64; // px of finger travel for full deflection
 
     window.addEventListener('keydown', (e) => {
+      // controls in the Settings / How to Play panels keep their own keys (slider arrows, Space toggles)
+      if (e.target instanceof Element && e.target.closest('.panel') && e.code !== 'Escape') return;
       if (e.code in KEY_AXES || e.code === 'Space') e.preventDefault();
       if (e.repeat) return;
       this.keys.add(e.code);

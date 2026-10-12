@@ -47,7 +47,12 @@ export class UI {
       music: $('tgl-music'),
       invert: $('tgl-invert'),
       tilt: $('tgl-tilt'),
+      sensitivity: $('sensitivity'),
+      sensitivityValue: $('sensitivity-value'),
+      settings: $('settings'),
+      howto: $('howto'),
     };
+    this.overlay = null; // 'settings' | 'howto' while one is open over the menu
     this.lastScore = -1;
     this.countdownTimer = null;
     this.bannerTimer = null;
@@ -55,6 +60,7 @@ export class UI {
   }
 
   show(name) {
+    this.closeOverlay();
     for (const key of ['menu', 'pause', 'gameover']) this.el[key].hidden = key !== name;
     const playing = name === 'play';
     this.el.hud.hidden = !playing && name !== 'pause';
@@ -74,14 +80,28 @@ export class UI {
   }
 
   setToggles(settings) {
-    this.el.sound.textContent = `Sound: ${settings.sound ? 'On' : 'Off'}`;
-    this.el.music.textContent = `Music: ${settings.music ? 'On' : 'Off'}`;
-    this.el.invert.textContent = `Invert Y: ${settings.invertY ? 'On' : 'Off'}`;
-    this.el.sound.setAttribute('aria-pressed', String(settings.sound));
-    this.el.music.setAttribute('aria-pressed', String(settings.music));
-    this.el.invert.setAttribute('aria-pressed', String(settings.invertY));
-    this.el.tilt.textContent = `Tilt steering: ${settings.tilt ? 'On' : 'Off'}`;
-    this.el.tilt.setAttribute('aria-pressed', String(settings.tilt));
+    const set = (el, on) => el.setAttribute('aria-checked', String(on));
+    set(this.el.sound, settings.sound);
+    set(this.el.music, settings.music);
+    set(this.el.invert, settings.invertY);
+    set(this.el.tilt, settings.tilt);
+    const pct = Math.round(settings.sensitivity * 100);
+    this.el.sensitivity.value = String(pct);
+    this.el.sensitivityValue.textContent = `${pct}%`;
+  }
+
+  // Settings / How to Play panels shown over the main menu.
+  openOverlay(name) {
+    this.closeOverlay();
+    this.overlay = name;
+    this.el[name].hidden = false;
+    this.el[name].querySelector('[data-close]')?.focus({ preventScroll: true });
+  }
+
+  closeOverlay() {
+    if (!this.overlay) return;
+    this.el[this.overlay].hidden = true;
+    this.overlay = null;
   }
 
   // fraction: remaining slow motion, 0..1 (0 hides the meter); depth: how slowed the world is, 0..1
