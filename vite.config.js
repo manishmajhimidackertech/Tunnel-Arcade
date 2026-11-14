@@ -44,7 +44,6 @@ export default defineConfig({
   build: {
     target: 'es2020',
     assetsInlineLimit: 0,
-    chunkSizeWarningLimit: 900,
   },
   plugins: [serviceWorker()],
 });

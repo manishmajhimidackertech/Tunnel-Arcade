@@ -1,53 +1,31 @@
 // Crash explosion: additive particle burst plus an expanding shock ring.
-import {
-  AdditiveBlending,
-  BufferAttribute,
-  BufferGeometry,
-  Color,
-  DoubleSide,
-  Mesh,
-  MeshBasicMaterial,
-  Points,
-  PointsMaterial,
-  RingGeometry,
-} from 'three';
+import { Color } from '../gl/math.js';
+import { Geometry, ring } from '../gl/geometry.js';
+import { DOUBLE, Mesh, Points, basicMaterial } from '../gl/scene.js';
 import { radialGlowTexture } from './textures.js';
 
 const COUNT = 420;
 
 export class Explosion {
   constructor(scene) {
-    const geometry = new BufferGeometry();
     this.positions = new Float32Array(COUNT * 3);
     this.colors = new Float32Array(COUNT * 3);
     this.velocities = new Float32Array(COUNT * 3);
-    geometry.setAttribute('position', new BufferAttribute(this.positions, 3));
-    geometry.setAttribute('color', new BufferAttribute(this.colors, 3));
-    this.material = new PointsMaterial({
+    this.geometry = new Geometry({ position: this.positions, color: this.colors, dynamic: true });
+    this.material = basicMaterial({
       size: 0.55,
       map: radialGlowTexture('rgba(255,255,255,1)', 'rgba(255,180,90,0.6)', 64),
-      vertexColors: true,
-      blending: AdditiveBlending,
-      transparent: true,
-      depthWrite: false,
+      additive: true,
       depthTest: false, // the wreck sits inside whatever we hit; always draw the blast
     });
-    this.points = new Points(geometry, this.material);
-    this.points.frustumCulled = false;
+    this.points = new Points(this.geometry, this.material);
     this.points.renderOrder = 10;
     this.points.visible = false;
     scene.add(this.points);
 
     this.ring = new Mesh(
-      new RingGeometry(0.8, 1, 48),
-      new MeshBasicMaterial({
-        color: '#ffd9a0',
-        transparent: true,
-        blending: AdditiveBlending,
-        side: DoubleSide,
-        depthWrite: false,
-        depthTest: false,
-      }),
+      ring(0.8, 1, 48),
+      basicMaterial({ color: '#ffd9a0', additive: true, side: DOUBLE, depthTest: false }),
     );
     this.ring.renderOrder = 10;
     this.ring.visible = false;
@@ -67,8 +45,7 @@ export class Explosion {
       const c = palette[Math.floor(Math.random() * palette.length)];
       this.colors.set([c.r, c.g, c.b], i * 3);
     }
-    this.points.geometry.attributes.position.needsUpdate = true;
-    this.points.geometry.attributes.color.needsUpdate = true;
+    this.geometry.needsUpdate = true;
     this.points.visible = true;
     this.ring.visible = true;
     this.ring.position.copy(position);
@@ -87,7 +64,7 @@ export class Explosion {
       this.positions[i + 1] += this.velocities[i + 1] * dt;
       this.positions[i + 2] += this.velocities[i + 2] * dt;
     }
-    this.points.geometry.attributes.position.needsUpdate = true;
+    this.geometry.needsUpdate = true;
     this.material.opacity = Math.max(0, 1 - this.age / 1.6);
     this.material.size = 0.55 + this.age * 0.4;
     const ringScale = 1 + this.age * 14;
