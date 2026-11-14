@@ -2,7 +2,7 @@
   "name": "tunnel-arcade",
   "private": true,
   "version": "1.0.0",
-  "description": "Tunnel Arcade: an endless 3D tunnel flyer, playable as an installable, offline-capable PWA built with Three.js.",
+  "description": "Tunnel Arcade: an endless 3D tunnel flyer, playable as an installable, offline-capable PWA rendered with hand-written WebGL.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,8 +12,7 @@
     "icons": "node scripts/icons.mjs"
   },
   "dependencies": {
-    "@fontsource/orbitron": "^5.3.0",
-    "three": "^0.186.1"
+    "@fontsource/orbitron": "^5.3.0"
   },
   "devDependencies": {
     "sharp": "^0.35.5",
