@@ -1,5 +1,5 @@
 // Tunnel styles, modelled on the four looks in the original game's screenshots.
-import { Color } from 'three';
+import { Color } from '../gl/math.js';
 import { makeCanvas, toTexture, speckle, blotches, bevelPanel, glowRect, rng } from './textures.js';
 
 const SIZE = 256;
