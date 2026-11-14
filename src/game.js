@@ -1,16 +1,6 @@
-import {
-  ACESFilmicToneMapping,
-  Fog,
-  Group,
-  HemisphereLight,
-  PerspectiveCamera,
-  PMREMGenerator,
-  PointLight,
-  Scene,
-  SRGBColorSpace,
-  WebGLRenderer,
-} from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { Color } from './gl/math.js';
+import { Renderer } from './gl/renderer.js';
+import { Camera, Node, PointLight } from './gl/scene.js';
 import {
   CAMERA_DISTANCE,
   COUNTDOWN_STEP,
@@ -34,7 +24,7 @@ import { THEMES, themeColors } from './world/themes.js';
 import { ObstacleField } from './world/obstacles.js';
 import { Ship } from './world/ship.js';
 import { Explosion } from './world/effects.js';
-import { bendUniform, bendAt, rollAt } from './world/bend.js';
+import { bendAt, rollAt } from './world/bend.js';
 import { loadBest, saveBest } from './storage.js';
 
 const MENU_SPEED = 14;
@@ -51,39 +41,30 @@ export class Game {
     this.debug = debug;
 
     const dpr = window.devicePixelRatio || 1;
-    this.renderer = new WebGLRenderer({ canvas, antialias: dpr < 2, powerPreference: 'high-performance' });
+    this.renderer = new Renderer(canvas, { antialias: dpr < 2 });
     this.maxPixelRatio = Math.min(dpr, 2);
     this.pixelRatio = this.maxPixelRatio;
     this.renderer.setPixelRatio(this.pixelRatio);
-    this.renderer.outputColorSpace = SRGBColorSpace;
-    this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
 
-    this.scene = new Scene();
-    const pmrem = new PMREMGenerator(this.renderer);
-    const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environment = envMap; // ship and obstacles; tunnel walls set their own
-    this.scene.environmentIntensity = 0.45;
-    pmrem.dispose();
+    // Everything the renderer draws: the node tree, fog (which is also the background),
+    // sky / ground ambient light and the curved-world bend.
+    const start = THEME_COLORS[0];
+    this.fogColor = new Color().lerp(start.fog, 1);
+    this.hemi = { sky: new Color().lerp(start.sky, 1), ground: new Color().lerp(start.ground, 1), intensity: start.intensity };
+    this.scene = { root: new Node(), fogColor: this.fogColor, fogNear: 40, fogFar: 235, hemisphere: this.hemi, bend: [0, 0] };
 
-    this.scene.fog = new Fog(THEME_COLORS[0].fog, 40, 235);
-    this.fogColor = this.scene.fog.color; // Fog copies the colour, so animate its own instance
-    this.scene.background = this.fogColor;
+    this.camera = new Camera(70, 0.1, 420);
+    this.headlight = new PointLight('#ffffff', start.headlight, 70, 1.3);
+    this.scene.root.add(this.headlight);
 
-    this.camera = new PerspectiveCamera(70, 1, 0.1, 420);
-    this.hemi = new HemisphereLight(THEME_COLORS[0].sky, THEME_COLORS[0].ground, THEME_COLORS[0].intensity);
-    this.scene.add(this.hemi);
-    this.headlight = new PointLight('#ffffff', THEME_COLORS[0].headlight, 70, 1.3);
-    this.scene.add(this.headlight);
-
-    this.root = new Group(); // the whole tunnel; rolled around the Z axis
-    this.scene.add(this.root);
-    this.tunnel = new Tunnel(this.root, envMap);
+    this.root = new Node(); // the whole tunnel; rolled around the Z axis
+    this.scene.root.add(this.root);
+    this.tunnel = new Tunnel(this.root);
     this.obstacles = new ObstacleField(this.root);
     this.obstacles.rollAt = (s) => this.rollFor(s);
     this.ship = new Ship();
-    this.scene.add(this.ship.group);
-    this.explosion = new Explosion(this.scene);
+    this.scene.root.add(this.ship.group);
+    this.explosion = new Explosion(this.scene.root);
 
     this.state = 'menu';
     this.mode = 'classic';
@@ -107,7 +88,16 @@ export class Game {
     window.addEventListener('resize', () => this.resize());
     this.resize();
     this.last = performance.now();
-    this.renderer.setAnimationLoop((now) => this.frame(now));
+    const loop = (now) => {
+      this.loopId = requestAnimationFrame(loop);
+      this.frame(now);
+    };
+    this.loopId = requestAnimationFrame(loop);
+  }
+
+  // Stops the frame loop (used by automated checks that step the game by hand).
+  stopLoop() {
+    cancelAnimationFrame(this.loopId);
   }
 
   resize() {
@@ -115,6 +105,7 @@ export class Game {
     const h = window.innerHeight;
     this.renderer.setSize(w, h);
     this.camera.aspect = w / h;
+    this.camera.updateProjection();
     this.updateFov();
   }
 
@@ -127,7 +118,7 @@ export class Game {
     const fov = Math.max(base, needed);
     if (Math.abs(fov - this.camera.fov) > 0.05) {
       this.camera.fov = fov;
-      this.camera.updateProjectionMatrix();
+      this.camera.updateProjection();
     }
   }
 
@@ -257,7 +248,7 @@ export class Game {
     const inMenu = this.state === 'menu' || this.state === 'gameover';
     // Curves and roll build up slowly over the first few minutes to avoid motion sickness.
     const curve = inMenu ? 0.7 : Math.min(1, 0.3 + run / 2500);
-    bendAt(this.distance, curve, bendUniform.value);
+    bendAt(this.distance, curve, this.scene.bend);
     this.roll = this.rollFor(this.distance);
     this.root.rotation.z = this.roll;
 
@@ -397,7 +388,7 @@ export class Game {
     const jx = (Math.random() - 0.5) * jitter;
     const jy = (Math.random() - 0.5) * jitter;
     const { x, y } = this.follow;
-    this.camera.position.set(x * 0.45 + jx, y * 0.45 + 1.0 + jy, CAMERA_DISTANCE);
+    this.camera.place(x * 0.45 + jx, y * 0.45 + 1.0 + jy, CAMERA_DISTANCE);
     this.camera.lookAt(x * 0.25, y * 0.25 + 0.45, -40);
     this.headlight.position.set(x * 0.4, y * 0.4 + 0.5, -16);
   }
@@ -407,8 +398,8 @@ export class Game {
     const target = THEME_COLORS[themeIndexAt(this.distance + 120)];
     const k = Math.min(1, dt * 0.9);
     this.fogColor.lerp(target.fog, k);
-    this.hemi.color.lerp(target.sky, k);
-    this.hemi.groundColor.lerp(target.ground, k);
+    this.hemi.sky.lerp(target.sky, k);
+    this.hemi.ground.lerp(target.ground, k);
     this.hemi.intensity += (target.intensity - this.hemi.intensity) * k;
     this.headlight.intensity += (target.headlight - this.headlight.intensity) * k;
   }
