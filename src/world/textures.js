@@ -1,5 +1,5 @@
 // Procedural canvas textures, so the game ships without any image assets.
-import { CanvasTexture, RepeatWrapping, SRGBColorSpace } from 'three';
+import { Texture } from '../gl/scene.js';
 
 export function makeCanvas(w, h = w) {
   const canvas = document.createElement('canvas');
@@ -8,12 +8,8 @@ export function makeCanvas(w, h = w) {
   return [canvas, canvas.getContext('2d')];
 }
 
-export function toTexture(canvas, { srgb = true, repeat = true } = {}) {
-  const tex = new CanvasTexture(canvas);
-  if (srgb) tex.colorSpace = SRGBColorSpace;
-  if (repeat) tex.wrapS = tex.wrapT = RepeatWrapping;
-  tex.anisotropy = 4;
-  return tex;
+export function toTexture(canvas, options) {
+  return new Texture(canvas, options);
 }
 
 export function rng(seed) {
@@ -117,7 +113,7 @@ export function stripeTexture() {
 }
 
 // Front face of a door: dark metal disc with glowing red outlines around every hole.
-// UVs of the extruded cap are raw shape coordinates, so we draw in those units.
+// Texture coordinates of the extruded faces are raw shape coordinates, so we draw in those units.
 export function doorTextures(holes, radius) {
   const size = 512;
   const scale = size / (radius * 2);
@@ -175,8 +171,8 @@ export function doorTextures(holes, radius) {
   const map = toTexture(canvas, { repeat: false });
   const emissiveMap = toTexture(eCanvas, { repeat: false });
   for (const tex of [map, emissiveMap]) {
-    tex.repeat.set(1 / (radius * 2), 1 / (radius * 2));
-    tex.offset.set(0.5, 0.5);
+    tex.repeat = [1 / (radius * 2), 1 / (radius * 2)];
+    tex.offset = [0.5, 0.5];
   }
   return { map, emissiveMap };
 }
